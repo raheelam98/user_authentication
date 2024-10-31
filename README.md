@@ -1,9 +1,7 @@
 # user_authentication
 user authentication steps
 
-# Authentication
-
-# Authentication
+## Authentication
 
 ```shell
 pip install fastapi sqlmodel bcrypt pyjwt 
