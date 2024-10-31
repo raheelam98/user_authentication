@@ -3,6 +3,8 @@ user authentication steps
 
 # Authentication
 
+# Authentication
+
 ```shell
 pip install fastapi sqlmodel bcrypt pyjwt 
 
@@ -132,20 +134,19 @@ def verifyPassword(plainText: str, hashedPassword: str) -> bool:
 
 **Verification: `pwd_context.verify()`** checks if a provided password matches the stored hash, returning True if it matches and False otherwise.
 
-#### login for access toke
+#### Login for access toke
 ```bash
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import SQLModel, Session, select
 
-from app.db.db_connector import  get_session
-from app.models.user_model import User
-from app.main import verifyPassword, create_access_token
+from app.db.db_connector import  get_session # import from database connector
+from app.models.user_model import User  # import from user model
+from app.main import verifyPassword, create_access_token # from above code
 
 SECRET_KEY = 'secret key'
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES =60
-
 
 class Token(SQLModel):
     access_token: str
