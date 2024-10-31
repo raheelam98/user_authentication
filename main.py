@@ -33,8 +33,6 @@ def root_route():
 
 from passlib.context import CryptContext
 
-#ACCESS_TOKEN_EXPIRE_MINUTES = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-
 # OAuth2PasswordBearer is used to provide the OAuth2 token URL for token generation
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -49,6 +47,8 @@ def passwordIntoHash(password: str) -> str:
 def verifyPassword(plainText: str, hashedPassword: str) -> bool:
     return pwd_context.verify(plainText, hashedPassword)
 
+### ========================= *****  ========================= ###
+
 # Function to create a JWT access token
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()  # Create a copy of the data to encode
@@ -61,6 +61,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})  # Add the expiration time to the data
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)  # Encode the JWT
     return encoded_jwt
+
+### ========================= *****  ========================= ###
 
 # Function to get the current user from the provided token
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -87,6 +89,18 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     # Return the extracted email
     return email
 
+### ========================= *****  ========================= ###
+
+# POST route to add a new user
+@app.post('/api/register_user')
+def add_user(new_user: UserModel, session: DB_SESSION):
+    # Call function to add user
+    add_user = add_user_into_db(new_user, session)
+    print("Add user route ...", add_user)
+    return add_user
+
+### ========================= *****  ========================= ###
+
 @app.post("/token", response_model=Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
     # Retrieve the user from the database using the provided email
@@ -111,6 +125,8 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), ses
     # Return the access token and its type
     return {"access_token": access_token, "token_type": "bearer"}
 
+### ========================= *****  ========================= ###
+
 @app.get("/auth_users/detail", response_model=User)
 def read_users_me(current_user_email: str = Depends(get_current_user), session: Session = Depends(get_session)):
     # Retrieve the user from the database using the current user's email
@@ -124,25 +140,14 @@ def read_users_me(current_user_email: str = Depends(get_current_user), session: 
     return user
 
 ### ========================= *****  ========================= ###
-### ========================= *****  ========================= ###
 
 # API endpoint to get users
-@app.get('/api/get_user')
+@app.get('/api/get_users')
 def get_user(session: DB_SESSION):
     # Call the function to retrieve user data from the database
     users = get_user_from_db(session)
     # Return the list of users
     return users
-
-### ========================= *****  ========================= ###
-
-# POST route to add a new user
-@app.post('/api/register_user')
-def add_user(new_user: UserModel, session: DB_SESSION):
-    # Call function to add user
-    add_user = add_user_into_db(new_user, session)
-    print("Add user route ...", add_user)
-    return add_user
 
 ### ========================= *****  ========================= ###
 

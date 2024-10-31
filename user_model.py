@@ -22,7 +22,6 @@ class User(UserModel, table=True):
 
 class UserUpdateModel(SQLModel):
     user_name: Optional[str]
-    user_password: Optional[str]
     user_address: Optional[str]
     user_country: Optional[str]
     phone_number: Optional[int] = Field(ge=100000000, le=999999999999, description="Must be valid Phone Number with 9, 10, or 11 digits")
