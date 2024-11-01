@@ -1,4 +1,5 @@
-# user_service_auth -  user_crud.py
+# user_service_auth -  app/controllers/user_crud.py
+
 from fastapi import HTTPException
 from sqlmodel import select, Session
 from app.db.db_connector import DB_SESSION

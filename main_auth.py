@@ -47,16 +47,7 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-# Function to hash a password
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-# Function to verify a plain text password against a hashed password
-def verify_password(plainText: str, hashedPassword: str) -> bool:
-    return pwd_context.verify(plainText, hashedPassword)
-
 ### ========================= *****  ========================= ###
-
 
 # Function to create a JWT access token
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -69,65 +60,108 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)  # Encode the JWT
     return encoded_jwt
 
+### ========================= *****  ========================= ###
+
+# Function to hash a password
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+# Function to verify a plain text password against a hashed password
+def verify_password(plainText: str, hashedPassword: str) -> bool:
+    return pwd_context.verify(plainText, hashedPassword)
+
+### ========================= *****  ========================= ###
+
 # Dependency to get the current user from the token
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # Decode the JWT
-        email: str = payload.get("sub")  # Extract email from the token payload
+        # Decode the JWT (JSON Web Token) using the secret key and specified algorithm
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        
+        # Extract the email (subject) from the decoded payload
+        email: str = payload.get("sub")
+        
+        # If the email is not found in the payload, raise an unauthorized exception
         if email is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials"
+            )
     except jwt.PyJWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
+        # If there's an error decoding the token, raise an unauthorized exception
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials"
+        )
+    
+    # Return the extracted email
     return email
 
 ### ========================= *****  ========================= ###
-    
+
 @app.post("/register", response_model=User)
 async def register_user(new_user: UserModel, session: DB_SESSION):
-    # Check if user already exists
+    # Check if user already exists in the database
     db_user = session.exec(select(User).where(User.user_email == new_user.user_email)).first()
-    print("db_user", db_user)
+    print("db_user", db_user)  # Debug print statement to check if the user exists
 
+    # If the user already exists, raise an HTTP 409 Conflict exception
     if db_user:
         raise HTTPException(
             status_code=409, detail="User with these credentials already exists"
         )
 
-    # Create a new user object
+    # Create a new user object with the provided data
     user = User(
         user_name=new_user.user_name,
         user_email=new_user.user_email,
-        user_password= hash_password(new_user.user_password) , # Hash the user password
+        user_password= hash_password(new_user.user_password),  # Hash the user password
         user_address=new_user.user_address,
         user_country=new_user.user_country,
         phone_number=new_user.phone_number
     )
 
-    # Add the user to the session
-    session.add(user) # Add the user to the session
-    session.commit()  # Commit to get the user ID
-    session.refresh(user)  # Refresh the user instance
-    print("user", user)
+    # Add the new user to the session
+    session.add(user)  # Add the user to the session
+    session.commit()  # Commit to save the new user to the database and get the user ID
+    session.refresh(user)  # Refresh the user instance to get the latest data from the database
+    print("user", user)  # Debug print statement to check the created user
+
+    # Return the created user object as the response
     return user
 
 ### ========================= *****  ========================= ###    
 
 @app.post("/login", response_model=Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
-    user = session.exec(select(User).where(User.user_email == form_data.username)).first()  # Retrieve user by email
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):  
+    # Retrieve the user from the database using the provided email
+    user = session.exec(select(User).where(User.user_email == form_data.username)).first()
+
+    # If the user does not exist or the password is incorrect, raise an unauthorized exception
     if not user or not verify_password(form_data.password, user.user_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)  # Set token expiration time
-    access_token = create_access_token(data={"sub": user.user_email}, expires_delta=access_token_expires)  # Create access token
+
+    # Set the token expiration time
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    # Create an access token with the user's email as the subject
+    access_token = create_access_token(data={"sub": user.user_email}, expires_delta=access_token_expires)
+
+    # Return the access token and its type
     return {"access_token": access_token, "token_type": "bearer"}
 
 ### ========================= *****  ========================= ###
 
-@app.get("/users/profile", response_model=User)
+@app.get("/user/profile", response_model=User)
 def read_users_profile(current_user_email: str = Depends(get_current_user), session: Session = Depends(get_session)):
-    user = session.exec(select(User).where(User.user_email == current_user_email)).first()  # Retrieve user by email
+    # Retrieve the user from the database using the provided email
+    user = session.exec(select(User).where(User.user_email == current_user_email)).first()
+
+    # If the user is not found, raise a 404 (Not Found) exception
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return the user details as the response
     return user
 
 ### ========================= *****  ========================= ###
@@ -145,30 +179,33 @@ def update_user(user_id: int, user_update: UserUpdateModel, session: DB_SESSION)
     session.refresh(db_user)  # Refresh the user instance
     return db_user
 
+
 ### ========================= *****  ========================= ###
 
 # Profile section
 @app.patch("/profile", response_model=MessageResponse)
 async def update_user_profile(profile_data: UserUpdateModel, current_user_email: str = Depends(get_current_user), session: Session = Depends(get_session)):
     # Fetch the current user from the database
-    current_user = session.exec(select(User).where(User.user_email == current_user_email)).first()
+    select_user = session.exec(select(User).where(User.user_email == current_user_email)).first()
 
     # Ensure the current user is a User object
-    if not current_user:
+    if not select_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Update the user's profile
+
+    # Convert the profile_data model to a dictionary, excluding unset fields
     updates = profile_data.model_dump(exclude_unset=True)  # Exclude unset fields
     for key, value in updates.items():
-        setattr(current_user, key, value)
-    session.add(current_user)
+        setattr(select_user, key, value) # Set new values for the user attributes based on the updates dictionary
+    session.add(select_user)
     session.commit()
     
     return {"message": "Profile updated successfully."}
 
 ### ========================= *****  ========================= ###
 
-@app.get('/api/get_users')
+@app.get('/get_users')
 # Function to retrieve user data from the database
 def get_user_from_db(session: DB_SESSION):
     # Create a SQL statement to select all users
@@ -186,21 +223,28 @@ def get_user_from_db(session: DB_SESSION):
 ### ========================= *****  ========================= ###  
        
 # Endpoint to reset password
+    
 @app.post("/reset-password", response_model=MessageResponse)
 async def reset_password(reset_data: ResetPasswordModel, session: DB_SESSION):
+    # Fetch the user from the database using the provided email
     user = session.exec(select(User).where(User.user_email == reset_data.user_email)).first()
     
+    # If the user is not found, raise a 404 (Not Found) exception
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User with this email does not exist"
         )
     
+    # Hash the new password and update the user's password
     user.user_password = hash_password(reset_data.new_password)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
     
+    # Add the updated user to the session
+    session.add(user)
+    session.commit()  # Commit the transaction to save changes to the database
+    session.refresh(user)  # Refresh the user instance to get the latest data from the database
+    
+    # Return a success message
     return {"message": "Password updated successfully"}
 
 ### ========================= *****  ========================= ###

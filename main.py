@@ -34,18 +34,10 @@ def root_route():
 from passlib.context import CryptContext
 
 # OAuth2PasswordBearer is used to provide the OAuth2 token URL for token generation
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user_login")
 
 # CryptContext is used to handle password hashing and verification using bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Function to hash a password
-def passwordIntoHash(password: str) -> str:
-    return pwd_context.hash(password)
-
-# Function to verify a plain text password against a hashed password
-def verifyPassword(plainText: str, hashedPassword: str) -> bool:
-    return pwd_context.verify(plainText, hashedPassword)
 
 ### ========================= *****  ========================= ###
 
@@ -61,6 +53,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})  # Add the expiration time to the data
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)  # Encode the JWT
     return encoded_jwt
+
+### ========================= *****  ========================= ###
+
+# Function to hash a password
+def passwordIntoHash(password: str) -> str:
+    return pwd_context.hash(password)
+
+# Function to verify a plain text password against a hashed password
+def verifyPassword(plainText: str, hashedPassword: str) -> bool:
+    return pwd_context.verify(plainText, hashedPassword)
 
 ### ========================= *****  ========================= ###
 
@@ -101,7 +103,7 @@ def add_user(new_user: UserModel, session: DB_SESSION):
 
 ### ========================= *****  ========================= ###
 
-@app.post("/token", response_model=Token)
+@app.post("/user_login", response_model=Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
     # Retrieve the user from the database using the provided email
     user = session.exec(select(User).where(User.user_email == form_data.username)).first()
@@ -127,8 +129,8 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), ses
 
 ### ========================= *****  ========================= ###
 
-@app.get("/auth_users/detail", response_model=User)
-def read_users_me(current_user_email: str = Depends(get_current_user), session: Session = Depends(get_session)):
+@app.get("/auth_users/profile", response_model=User)
+def read_users_profile(current_user_email: str = Depends(get_current_user), session: Session = Depends(get_session)):
     # Retrieve the user from the database using the current user's email
     user = session.exec(select(User).where(User.user_email == current_user_email)).first()
     
@@ -143,7 +145,7 @@ def read_users_me(current_user_email: str = Depends(get_current_user), session: 
 
 # API endpoint to get users
 @app.get('/api/get_users')
-def get_user(session: DB_SESSION):
+def get_users(session: DB_SESSION):
     # Call the function to retrieve user data from the database
     users = get_user_from_db(session)
     # Return the list of users
