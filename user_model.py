@@ -1,4 +1,4 @@
-# user_service_auth -  user_model.py
+# user_service_auth -   app/model/user_model.py
 
 from sqlmodel import SQLModel, Field
 from typing import Optional
@@ -29,4 +29,13 @@ class UserUpdateModel(SQLModel):
 class Token(SQLModel):
     access_token: str
     token_type: str
+
+class ResetPasswordModel(SQLModel):
+    user_email: EmailStr
+    new_password: str     
+
+class MessageResponse(SQLModel):
+    message: str   
+
+
      

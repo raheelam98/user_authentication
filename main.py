@@ -1,4 +1,4 @@
-# user_service_auth -  user_main.py
+# user_service_auth -  app/user_main.py
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -8,7 +8,7 @@ import jwt
 from datetime import datetime, timedelta
 
 from app.db.db_connector import create_db_and_tables,  get_session,  DB_SESSION  
-from app.models.user_model import Token, User, UserUpdateModel,  UserModel , UserAuth
+from app.models.user_model import Token, User, UserUpdateModel,  UserModel 
 from app.controllers.user_crud import (add_user_into_db, get_user_from_db, update_user_from_db, delete_user_from_db)
 
 from app.settings import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
