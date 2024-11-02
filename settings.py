@@ -19,5 +19,11 @@ SECRET_KEY = config.get("SECRET_KEY")
 ACCESS_TOKEN_EXPIRE_MINUTES= timedelta(days=int(config.get("ACCESS_TOKEN_EXPIRE_MINUTES")))
 REFRESH_TOKEN_EXPIRE_MINUTES = config("REFRESH_TOKEN_EXPIRE_MINUTES", cast=int, default=1440)
 
+# topics for produce and consume messages
+BOOTSTRAP_SERVER = config("BOOTSTRAP_SERVER", cast=str)
+NOTIFICATION_TOPIC = config.get("NOTIFICATION_TOPIC", cast=str)
+
+
+
 
 

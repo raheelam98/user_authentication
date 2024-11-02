@@ -15,15 +15,18 @@ from app.settings import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 ### ========================= *****  ========================= ###
 
-# Lifespan function provided by FastAPI (creates DB table at program startup)
-# It creates the table only once; if the table already exists, it won't create it again
-async def life_span(app: FastAPI):
-    print("Call create tables function during lifespan startup...")
-    await create_db_and_tables()  # Properly await table creation
-    yield  # Lifespan generator is working correctly
 
-# Create FastAPI instance
-app = FastAPI(lifespan=life_span, title='Product API')
+# async def life_span(app: FastAPI):
+#     print("Call create tables function during lifespan startup...")
+#     await create_db_and_tables()  # Properly await table creation
+#     yield  # Lifespan generator is working correctly
+
+# # Lifespan function provided by FastAPI (creates DB table at program startup)
+# # It creates the table only once; if the table already exists, it won't create it again
+# # Create FastAPI instance
+# app = FastAPI(lifespan=life_span, title='Product API')
+
+app = FastAPI(lifespan = create_db_and_tables)
 
 @app.get('/')
 def root_route():
