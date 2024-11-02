@@ -3,7 +3,7 @@ version: "3.9"
 
 name: online_mart
 
-#===============================================================================================
+### ========================= *****  ========================= ###
 
 services:
 
@@ -13,15 +13,15 @@ services:
       dockerfile: Dockerfile
     container_name: user_container
     ports:
-      - "8081:8000"  # Expose host port 8009 to container port 8000 
+      - "8081:8000"  # Expose host port 8081 to container port 8000 
     depends_on:
         - postgres_db 
         - kafka  
     volumes:
       - ./user_service:/code   
 
-  #===============================================================================================
-  
+  ### ========================= *****  ========================= ###
+
   product:
     build:
       context: ./product_service
@@ -34,70 +34,8 @@ services:
     volumes:
       - ./product_service:/code 
 
-  
-  #===============================================================================================
-  
-  order:
-    build:
-      context: ./order_service
-      dockerfile: Dockerfile
-    container_name: order_container
-    ports:
-      - "8083:8000"  # Expose host port 8006 to container port 8000 
-    depends_on:
-        - postgres_db  
-        - kafka
-        # - broker
-    volumes:
-      - ./order_service:/code 
-        
+  ### ========================= *****  ========================= ###
 
-  #===============================================================================================
-  
-  inventory:
-    build:
-      context: ./inventory_service
-      dockerfile: Dockerfile
-    container_name: inventory_container
-    ports:
-      - "8084:8000"  # Expose host port 8007 to container port 8000 
-    depends_on:
-        - postgres_db   
-    volumes:
-      - ./inventory_service:/code 
-
-  #===============================================================================================
-  
-  payment:
-    build:
-      context: ./payment_service
-      dockerfile: Dockerfile
-    container_name: payment_container
-    ports:
-      - "8085:8000"  # Expose host port 8007 to container port 8000 
-    depends_on:
-        - postgres_db   
-    volumes:
-      - ./payment_service:/code 
-
-    #===============================================================================================
-  
-  notification:
-    build:
-      context: ./notification_service
-      dockerfile: Dockerfile
-    container_name: notification_container
-    ports:
-      - "8086:8000"  # Expose host port 8007 to container port 8000 
-    depends_on:
-        - postgres_db   
-    volumes:
-      - ./notification_service:/code 
-    
-
-
-  #===============================================================================================
-  
   # ## pg Admin
 
   # postgres_db:
@@ -113,25 +51,26 @@ services:
   #   volumes:
   #       - postgres_db:/var/lib/postgresql/data
  
-
-  #===============================================================================================
+### ========================= *****  ========================= ###
 
   ## neon
+  ## DATABASE_URL=postgresql://database_owner_name:password@hostname:port/database_name?sslmode=require
+
 
   postgres_db:
     image: postgres:latest  # Use the official PostgreSQL image
     restart: always
     container_name: PostgresCont
     environment:
-        - POSTGRES_USER=neondb_owner
-        - POSTGRES_PASSWORD=WC94rhZSjwUe
-        - POSTGRES_DB=online_mart_project
+        - POSTGRES_USER=database_owner_name
+        - POSTGRES_PASSWORD=password
+        - POSTGRES_DB=database_name
     ports:
         - '5432:5432'
     volumes:
         - postgres_db:/var/lib/postgresql/data
  
-#===============================================================================================
+### ========================= *****  ========================= ###
 
   kafka:
     image: apache/kafka:3.7.0
@@ -156,7 +95,8 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
 
 
-#===============================================================================================
+### ========================= *****  ========================= ###
+
   kafka-ui:
     image: provectuslabs/kafka-ui
     container_name: kafka-ui
@@ -168,20 +108,19 @@ services:
       DYNAMIC_CONFIG_ENABLED: "true"
     depends_on:
       - kafka
-#===============================================================================================
+### ========================= *****  ========================= ###
 
 volumes:
   postgres_db:
     driver: local
 
-#===============================================================================================
+### ========================= *****  ========================= ###
 
 networks:
   default:
     driver: bridge
 
-#===============================================================================================
-
+### ========================= *****  ========================= ###
 
 
 
